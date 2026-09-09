@@ -1,0 +1,145 @@
+:root {
+  --doculens-background: var(--vscode-editor-background);
+  --doculens-foreground: var(--vscode-editor-foreground);
+  --doculens-border: var(--vscode-panel-border);
+  --doculens-toolbar: var(
+    --vscode-titleBar-activeBackground,
+    var(--vscode-sideBar-background, var(--vscode-editor-background))
+  );
+  --doculens-toolbar-foreground: var(
+    --vscode-titleBar-activeForeground,
+    var(--vscode-sideBar-foreground, var(--vscode-foreground))
+  );
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--doculens-background);
+  color: var(--doculens-foreground);
+  font-family: var(--vscode-font-family, sans-serif);
+  font-size: var(--vscode-font-size, 13px);
+}
+
+#toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: var(--doculens-toolbar);
+  color: var(--doculens-toolbar-foreground);
+  border-bottom: 1px solid var(--doculens-border);
+  min-height: 32px;
+}
+
+#toolbar-title {
+  font-weight: 600;
+  font-size: 12px;
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#container {
+  padding: 24px;
+  overflow: auto;
+  height: calc(100% - 32px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--doculens-background);
+}
+
+/* Documento simula papel — fundo branco intencional e legível em todos os temas */
+#container .docx {
+  background: white;
+  color: black;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  max-width: 800px;
+  width: 100%;
+  min-height: 600px;
+  padding: 40px;
+}
+
+#loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 14px;
+  color: var(--vscode-descriptionForeground, var(--doculens-foreground));
+}
+
+#error {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+  max-width: 600px;
+  margin: 40px auto;
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  border: 1px solid var(--vscode-panel-border, transparent);
+  border-radius: 6px;
+}
+
+#error.visible {
+  display: flex;
+}
+
+#error h2 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: var(--vscode-errorForeground, var(--doculens-foreground));
+}
+
+#error p {
+  color: var(--vscode-descriptionForeground, var(--doculens-foreground));
+  line-height: 1.5;
+  margin: 6px 0;
+}
+
+#error ul {
+  text-align: left;
+  color: var(--vscode-descriptionForeground, var(--doculens-foreground));
+  margin-top: 12px;
+}
+
+.docx-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.docx-wrapper > section {
+  background: white;
+}
+
+@media (forced-colors: active) {
+  #toolbar {
+    border-bottom: 1px solid CanvasText;
+    forced-color-adjust: auto;
+  }
+
+  #error {
+    border: 1px solid CanvasText;
+  }
+
+  #container .docx {
+    border: 1px solid CanvasText;
+    box-shadow: none;
+  }
+
+  #error h2 {
+    color: CanvasText;
+  }
+}
