@@ -36,7 +36,24 @@
         ],
         "priority": "default"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "DocuLens",
+      "properties": {
+        "doculens.maxFileSize": {
+          "type": "number",
+          "default": 20971520,
+          "minimum": 1048576,
+          "description": "Tamanho máximo do arquivo DOCX em bytes (default 20 MB). Verificado antes de carregar em memória via stat."
+        },
+        "doculens.renderTimeout": {
+          "type": "number",
+          "default": 15000,
+          "minimum": 5000,
+          "description": "Timeout de renderização em milissegundos (default 15000 ms). Não cancela docx-preview, apenas interrompe o aguardo."
+        }
+      }
+    }
   },
   "scripts": {
     "dev": "node esbuild.mjs --watch",

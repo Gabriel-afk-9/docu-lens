@@ -3,6 +3,7 @@ import { getNonce } from "../../../shared/utils/nonce";
 import { RenderDocumentUseCase } from "../application/RenderDocumentUseCase";
 import { Logger } from "../infrastructure/Logger";
 import { DocumentReadError } from "../domain/errors/DocumentReadError";
+import { DocumentTooLargeError } from "../domain/errors/DocumentTooLargeError";
 import type { DocumentState } from "../domain/DocumentState";
 import type { ExtensionToWebviewMessage } from "../domain/types/Messages";
 
@@ -103,14 +104,26 @@ export class DocxCustomEditorProvider implements vscode.CustomReadonlyEditorProv
     webview: vscode.Webview,
     webviewPanel: vscode.WebviewPanel,
   ): Promise<void> {
+    const totalStart = performance.now();
     try {
       const data = await this.renderUseCase.execute(uri);
+      // A/B teste: webview.postMessage exige JSON-serializável; Uint8Array via JSON.stringify vira {"0":1,...} (perde tipo).
+      // Teste Node: JSON.stringify(new Uint8Array([1,2,3])) → '{"0":1,"1":2,"2":3}' (false para instanceof).
+      // Portanto base64 permanece necessário; Uint8Array direto não é suportado pelo protocolo atual.
+      const convertStart = performance.now();
       const base64 = Buffer.from(data).toString("base64");
+      const convertMs = Math.round(performance.now() - convertStart);
+      this.logger.info(`[perf] convert=${convertMs}ms bytes=${data.length} base64=${base64.length}`);
+      const postStart = performance.now();
       const message: ExtensionToWebviewMessage = {
         type: "render",
         data: base64,
       };
       await webview.postMessage(message);
+      const postMs = Math.round(performance.now() - postStart);
+      const totalMs = Math.round(performance.now() - totalStart);
+      this.logger.info(`[perf] postMessage=${postMs}ms`);
+      this.logger.info(`[perf] total=${totalMs}ms`);
       this.logger.info(`Document sent to webview: ${data.length} bytes`);
       const current = this.documentStates.get(webviewPanel);
       if (current) {
@@ -126,9 +139,11 @@ export class DocxCustomEditorProvider implements vscode.CustomReadonlyEditorProv
       this.logger.error(`Failed to send document: ${msg}`);
       this.logger.error(stack);
 
-      // Mensagem amigável já está no HTML estático da Webview (h2 + ul + p).
-      // Envia apenas sinal para exibir erro, sem duplicar título/bullets.
-      void (err instanceof DocumentReadError);
+      const isTooLarge = err instanceof DocumentTooLargeError;
+      const isReadError = err instanceof DocumentReadError;
+      void isReadError;
+      // Para arquivo muito grande, exibe mensagem específica com tamanho; caso contrário usa HTML estático
+      const friendlyForWebview = isTooLarge ? msg : "";
 
       const current = this.documentStates.get(webviewPanel);
       if (current) {
@@ -141,7 +156,7 @@ export class DocxCustomEditorProvider implements vscode.CustomReadonlyEditorProv
 
       const errorMessage: ExtensionToWebviewMessage = {
         type: "error",
-        message: "",
+        message: friendlyForWebview,
       };
       await webview.postMessage(errorMessage);
     }
@@ -154,6 +169,7 @@ export class DocxCustomEditorProvider implements vscode.CustomReadonlyEditorProv
     const styleUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this.context.extensionUri, "dist", "webview.css"),
     );
+    const renderTimeout = vscode.workspace.getConfiguration("doculens").get<number>("renderTimeout", 15000);
 
     const csp = [
       "default-src 'none'",
@@ -190,6 +206,7 @@ export class DocxCustomEditorProvider implements vscode.CustomReadonlyEditorProv
     <p>Tente abrir o documento novamente ou utilize "Reopen Editor With..." para escolher outro editor.</p>
   </div>
   <div id="container" style="display:none"></div>
+  <script nonce="${nonce}">window.__doculensRenderTimeout=${renderTimeout};</script>
   <script nonce="${nonce}" src="${scriptUri.toString()}"></script>
 </body>
 </html>`;

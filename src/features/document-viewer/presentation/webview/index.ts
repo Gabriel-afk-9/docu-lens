@@ -11,7 +11,10 @@ declare function acquireVsCodeApi(): {
 };
 
 const vscodeApi = acquireVsCodeApi();
-const renderer = new DocxPreviewRenderer();
+const renderTimeout = typeof (window as unknown as { __doculensRenderTimeout?: number }).__doculensRenderTimeout === "number"
+  ? (window as unknown as { __doculensRenderTimeout?: number }).__doculensRenderTimeout!
+  : 15000;
+const renderer = new DocxPreviewRenderer(renderTimeout);
 
 const container = document.getElementById("container") as HTMLElement | null;
 const loading = document.getElementById("loading") as HTMLElement | null;
@@ -82,13 +85,18 @@ async function handleRender(dataBase64: string): Promise<void> {
   }
 
   showLoading();
+  const renderStart = performance.now();
 
   try {
     const data = base64ToUint8Array(dataBase64);
     container.innerHTML = "";
     await renderer.render(data, container);
+    const renderMs = Math.round(performance.now() - renderStart);
+    vscodeApi.postMessage({ type: "error", message: `[perf] render=${renderMs}ms` });
     showContainer();
   } catch (err: unknown) {
+    const renderMs = Math.round(performance.now() - renderStart);
+    vscodeApi.postMessage({ type: "error", message: `[perf] render=${renderMs}ms failed` });
     const technical = err instanceof Error ? err.message : String(err);
     showError();
     vscodeApi.postMessage({ type: "error", message: technical });

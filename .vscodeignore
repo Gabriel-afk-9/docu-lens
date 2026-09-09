@@ -17,3 +17,4 @@ PRD-DocuLens.md
 pnpm-lock.yaml
 pnpm-workspace.yaml
 .generate_fixture.py
+scripts/**

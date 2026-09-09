@@ -62,6 +62,13 @@ export default tseslint.config(
   },
   {
     files: ["src/features/document-viewer/presentation/webview/**/*"],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+        project: "./tsconfig.webview.json",
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
     rules: {
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-call": "off",
@@ -81,6 +88,20 @@ export default tseslint.config(
     files: ["src/features/document-viewer/presentation/DocxCustomEditorProvider.ts"],
     rules: {
       "@typescript-eslint/require-await": "off",
+      "@typescript-eslint/no-unnecessary-type-assertion": "off",
+    },
+  },
+  {
+    files: ["test/**/*.ts"],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+        project: "./tsconfig.eslint.json",
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      "@typescript-eslint/unbound-method": "off",
       "@typescript-eslint/no-unnecessary-type-assertion": "off",
     },
   },
